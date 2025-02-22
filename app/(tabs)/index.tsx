@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
   },
   optionsRow: {
     alignItems: "center",
