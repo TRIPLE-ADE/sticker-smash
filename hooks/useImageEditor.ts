@@ -8,9 +8,13 @@ import domtoimage from 'dom-to-image';
 export const useImageEditor = () => {
   const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
   const [showAppOptions, setShowAppOptions] = useState(false);
-  const [pickedEmoji, setPickedEmoji] = useState<string[]>([]);
+  const [pickedEmoji, setPickedEmoji] = useState<{ id: string; emoji: string }[]>([]);
   const imageRef = useRef<View>(null);
 
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+
+  console.log(generateId());
   const openAppSettings = () => {
     Linking.openSettings();
   };
@@ -112,7 +116,11 @@ export const useImageEditor = () => {
   };
 
   const addEmoji = useCallback((emoji: string) => {
-    setPickedEmoji((prev) => [...prev, emoji]);
+    setPickedEmoji((prev) => [...prev, { id: generateId(), emoji }]);
+  }, []);
+
+  const removeEmoji = useCallback((id: string) => {
+    setPickedEmoji((prev) => prev.filter((emoji) => emoji.id !== id));
   }, []);
 
   return {
@@ -120,6 +128,7 @@ export const useImageEditor = () => {
     showAppOptions,
     setShowAppOptions,
     pickedEmoji,
+    removeEmoji,
     imageRef,
     takePhoto,
     pickImage,

@@ -1,57 +1,59 @@
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { Platform, useWindowDimensions } from "react-native";
+import { Platform, Pressable, useWindowDimensions, View } from "react-native";
+import { useEffect, useState } from "react";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 type Props = {
   size: number;
-  stickerSource: string;
+  stickerSource: { id: string; emoji: string };
+  onPress: (id: string) => void;
 };
 
-export default function EmojiSticker({ size, stickerSource }: Props) {
+export default function EmojiSticker({ size, stickerSource, onPress }: Props) {
   const { height, width } = useWindowDimensions();
   const scale = useSharedValue(size);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  const [showDeleteIcon, setShowDeleteIcon] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showDeleteIcon) {
+      timer = setTimeout(() => setShowDeleteIcon(false), 3000); // Hide after 3 seconds
+    }
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, [showDeleteIcon]);
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onStart(() => {
-      if (scale.value !== size * 2) {
-        scale.value = scale.value * 2;
-      } else {
-        scale.value = Math.round(scale.value / 2);
-      }
+      scale.value = scale.value === size * 2 ? size : size * 2;
     });
-
-  const emojiStyle = useAnimatedStyle(() => {
-    return {
-      fontSize: withSpring(scale.value),
-    };
-  });
 
   const drag = Gesture.Pan().onChange((event) => {
     translateX.value += event.changeX;
     translateY.value += event.changeY;
   });
 
-  const containerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX: translateX.value,
-        },
-        {
-          translateY: translateY.value,
-        },
-      ],
-    };
+  const longPress = Gesture.LongPress().onStart(() => {
+    runOnJS(setShowDeleteIcon)(true);
   });
 
-  const combinedGesture = Gesture.Simultaneous(drag, doubleTap);
+  const emojiStyle = useAnimatedStyle(() => ({
+    fontSize: withSpring(scale.value),
+  }));
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
+  }));
+
+  const combinedGesture = Gesture.Simultaneous(drag, doubleTap, longPress);
 
   return (
     <GestureDetector gesture={combinedGesture}>
@@ -65,8 +67,13 @@ export default function EmojiSticker({ size, stickerSource }: Props) {
           },
         ]}
       >
+        {showDeleteIcon && (
+          <Pressable onPress={() => onPress(stickerSource.id)} style={{ position: "absolute", top: -10, right: -20 }}>
+            <MaterialIcons name="delete" size={24} color="red" />
+          </Pressable>
+        )}
         <Animated.Text style={[emojiStyle, { fontSize: size }]}>
-          {stickerSource}
+          {stickerSource.emoji}
         </Animated.Text>
       </Animated.View>
     </GestureDetector>

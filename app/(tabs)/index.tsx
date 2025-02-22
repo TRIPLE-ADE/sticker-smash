@@ -1,11 +1,6 @@
 import "expo-dev-client";
-import { View, StyleSheet, Platform } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { useState, useRef } from "react";
+import { View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import * as MediaLibrary from "expo-media-library";
-import { captureRef } from "react-native-view-shot";
-import domtoimage from "dom-to-image";
 import {
   Button,
   CircleButton,
@@ -27,12 +22,13 @@ export default function Index() {
     showAppOptions,
     setShowAppOptions,
     pickedEmoji,
+    removeEmoji,
+    addEmoji,
     imageRef,
     takePhoto,
     pickImage,
     resetApp,
     saveImage,
-    addEmoji,
   } = useImageEditor();
 
   return (
@@ -45,7 +41,12 @@ export default function Index() {
               selectedImage={selectedImage}
             />
             {pickedEmoji.map((sticker, index) => (
-              <EmojiSticker key={index} stickerSource={sticker} size={40} />
+              <EmojiSticker
+                key={index}
+                onPress={removeEmoji}
+                stickerSource={sticker}
+                size={40}
+              />
             ))}
           </View>
         </View>
@@ -68,7 +69,7 @@ export default function Index() {
           </View>
         )}
         {isVisible && (
-          <View>
+          <View style={{ flex: 1, justifyContent: "flex-end" }}>
             <EmojiPicker
               key={isVisible ? "visible" : "hidden"}
               isVisible={isVisible}
