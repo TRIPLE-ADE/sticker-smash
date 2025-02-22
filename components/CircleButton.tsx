@@ -1,16 +1,25 @@
-import { View, Pressable, StyleSheet } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 type Props = {
   onPress: () => void;
+  isDisabled: boolean;
 };
 
-export default function CircleButton({ onPress }: Props) {
+export default function CircleButton({ onPress, isDisabled }: Props) {
   return (
-    <View style={styles.circleButtonContainer}>
-      <Pressable style={styles.circleButton} onPress={onPress}>
-        <MaterialIcons name="add" size={38} color="#25292e" />
-      </Pressable>
+    <View style={[styles.circleButtonContainer, isDisabled && styles.disabledContainer]}>
+      <TouchableOpacity
+        style={[styles.circleButton, isDisabled && styles.disabledButton]}
+        disabled={isDisabled}
+        onPress={onPress}
+      >
+        <MaterialIcons
+          name="add"
+          size={38}
+          color={isDisabled ? "#A0A0A0" : "#25292e"} 
+        />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -31,5 +40,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 42,
     backgroundColor: "#fff",
+  },
+  disabledContainer: {
+    opacity: 0.5, 
+  },
+  disabledButton: {
+    backgroundColor: "#E0E0E0",
   },
 });

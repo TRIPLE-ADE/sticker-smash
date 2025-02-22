@@ -1,110 +1,35 @@
 import "expo-dev-client";
-import { View, StyleSheet, Platform } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { useState, useRef } from "react";
+import { View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import * as MediaLibrary from "expo-media-library";
-import { type ImageSource } from "expo-image";
-import { captureRef } from "react-native-view-shot";
-import domtoimage from "dom-to-image";
-
-import Button from "@/components/Button";
-import ImageViewer from "@/components/ImageViewer";
-import IconButton from "@/components/IconButton";
-import CircleButton from "@/components/CircleButton";
-import EmojiPicker from "@/components/EmojiPicker";
-import EmojiList from "@/components/EmojiList";
-import EmojiSticker from "@/components/EmojiSticker";
+import {
+  Button,
+  CircleButton,
+  IconButton,
+  EmojiSticker,
+  ImageViewer,
+  EmojiList,
+  EmojiPicker,
+} from "@/components";
+import { useDisclosure, useImageEditor, usePermissions } from "@/hooks";
 
 const PlaceholderImage = require("../../assets/images/background-image.png");
 
 export default function Index() {
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(
-    undefined
-  );
-  const [showAppOptions, setShowAppOptions] = useState<boolean>(false);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [stickers, setStickers] = useState<ImageSource[]>([]);
-  const [status, requestPermission] = MediaLibrary.usePermissions();
-  const imageRef = useRef<View>(null);
-
-  if (status === null) {
-    requestPermission();
-  }
-
-  const pickImageAsync = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-      setShowAppOptions(true);
-    } else {
-      alert("You did not select any image.");
-    }
-  };
-
-  const onReset = () => {
-    setShowAppOptions(false);
-    setIsModalVisible(false);
-    setSelectedImage(undefined);
-    setStickers([]);
-  };
-
-  const onModalClose = () => {
-    console.log("Modal closed");
-    setIsModalVisible(false);
-  };
-
-  const onSaveImageAsync = async () => {
-    if (Platform.OS !== "web") {
-      try {
-        const localUri = await captureRef(imageRef, {
-          height: 440,
-          quality: 1,
-        });
-
-        await MediaLibrary.saveToLibraryAsync(localUri);
-        if (localUri) {
-          alert("Saved!");
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      try {
-        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
-          quality: 0.95,
-          width: 320,
-          height: 440,
-        });
-
-        let link = document.createElement("a");
-        link.download = "sticker-smash.jpeg";
-        link.href = dataUrl;
-        link.click();
-      } catch (e) {
-        console.log(e);
-      }
-    }
-  };
-
-  const onAddSticker = (sticker: ImageSource) => {
-    setStickers([...stickers, sticker]);
-    console.log("Sticker added, closing modal...");
-    setIsModalVisible(false);
-  };
-
-  const openStickerModal = () => {
-    console.log("Opening modal... Current state:", isModalVisible);
-    setIsModalVisible(true);
-    console.log("Modal state after update:", isModalVisible);
-  };
-
-  console.log("test:" + isModalVisible);
+  usePermissions();
+  const { isVisible, toggleModal } = useDisclosure();
+  const {
+    selectedImage,
+    showAppOptions,
+    setShowAppOptions,
+    pickedEmoji,
+    removeEmoji,
+    addEmoji,
+    imageRef,
+    takePhoto,
+    pickImage,
+    resetApp,
+    saveImage,
+  } = useImageEditor();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -115,48 +40,42 @@ export default function Index() {
               imgSource={PlaceholderImage}
               selectedImage={selectedImage}
             />
-            {stickers.map((sticker, index) => (
+            {pickedEmoji.map((sticker, index) => (
               <EmojiSticker
                 key={index}
+                onPress={removeEmoji}
                 stickerSource={sticker}
-                imageSize={40}
+                size={40}
               />
             ))}
           </View>
         </View>
         {showAppOptions ? (
-          <View >
+          <View style={styles.optionsContainer}>
             <View style={styles.optionsRow}>
-              <IconButton icon="refresh" label="Reset" onPress={onReset} />
-              <CircleButton onPress={openStickerModal} />
-              <IconButton
-                icon="save-alt"
-                label="Save"
-                onPress={onSaveImageAsync}
-              />
+              <IconButton icon="refresh" label="Reset" onPress={resetApp} />
+              <CircleButton onPress={toggleModal} isDisabled={isVisible} />
+              <IconButton icon="save-alt" label="Save" onPress={saveImage} />
             </View>
           </View>
         ) : (
-          <View>
-            <Button
-              theme="primary"
-              label="Choose a photo"
-              onPress={pickImageAsync}
-            />
+          <View style={styles.optionsContainer}>
+            <Button theme="primary" label="Choose Photo" onPress={pickImage} />
+            <Button theme="primary" label="Take Photo" onPress={takePhoto} />
             <Button
               label="Use this photo"
               onPress={() => setShowAppOptions(true)}
             />
           </View>
         )}
-        {isModalVisible && (
-          <View>
+        {isVisible && (
+          <View style={{ flex: 1, justifyContent: "flex-end" }}>
             <EmojiPicker
-              key={isModalVisible ? "visible" : "hidden"}
-              isVisible={isModalVisible}
-              onClose={onModalClose}
+              key={isVisible ? "visible" : "hidden"}
+              isVisible={isVisible}
+              onClose={toggleModal}
             >
-              <EmojiList onSelect={onAddSticker} />
+              <EmojiList onSelect={addEmoji} onClose={toggleModal} />
             </EmojiPicker>
           </View>
         )}
@@ -170,7 +89,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#25292e",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
   imageContainer: {
     position: "relative",
