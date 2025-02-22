@@ -4,7 +4,6 @@ import * as ImagePicker from "expo-image-picker";
 import { useState, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from "expo-media-library";
-import { type ImageSource } from "expo-image";
 import { captureRef } from "react-native-view-shot";
 import domtoimage from "dom-to-image";
 
@@ -24,7 +23,7 @@ export default function Index() {
   );
   const [showAppOptions, setShowAppOptions] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [stickers, setStickers] = useState<ImageSource[]>([]);
+  const [stickers, setStickers] = useState<string[]>([]);
   const [status, requestPermission] = MediaLibrary.usePermissions();
   const imageRef = useRef<View>(null);
 
@@ -54,8 +53,7 @@ export default function Index() {
     setStickers([]);
   };
 
-  const onModalClose = () => {
-    console.log("Modal closed");
+  const onModalClose = () => {;
     setIsModalVisible(false);
   };
 
@@ -92,19 +90,14 @@ export default function Index() {
     }
   };
 
-  const onAddSticker = (sticker: ImageSource) => {
-    setStickers([...stickers, sticker]);
-    console.log("Sticker added, closing modal...");
+  const onAddSticker = (sticker: string) => {
+    setStickers((prev) => [...prev, sticker]);
     setIsModalVisible(false);
   };
 
   const openStickerModal = () => {
-    console.log("Opening modal... Current state:", isModalVisible);
     setIsModalVisible(true);
-    console.log("Modal state after update:", isModalVisible);
   };
-
-  console.log("test:" + isModalVisible);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -119,7 +112,7 @@ export default function Index() {
               <EmojiSticker
                 key={index}
                 stickerSource={sticker}
-                imageSize={40}
+                size={40}
               />
             ))}
           </View>

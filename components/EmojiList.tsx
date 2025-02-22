@@ -1,20 +1,10 @@
 import { StyleSheet, FlatList, Platform, Pressable, Text } from "react-native";
-import { Image, type ImageSource } from "expo-image";
 
 type Props = {
-  onSelect: (emoji: ImageSource) => void;
+  onSelect: (emoji: string) => void;
 };
 
 export default function EmojiList({ onSelect }: Props) {
-  const emoji: ImageSource[] = [
-    require("../assets/images/emoji1.png"),
-    require("../assets/images/emoji2.png"),
-    require("../assets/images/emoji3.png"),
-    require("../assets/images/emoji4.png"),
-    require("../assets/images/emoji5.png"),
-    require("../assets/images/emoji6.png"),
-  ];
-
   const emojies = [
     // Shopping & Payment
     "🛒",
@@ -264,10 +254,10 @@ export default function EmojiList({ onSelect }: Props) {
   return (
     <FlatList
       showsHorizontalScrollIndicator={Platform.OS === "web"}
-      data={emoji}
+      data={emojies}
       contentContainerStyle={styles.listContainer}
       keyExtractor={(_, index) => index.toString()} 
-      numColumns={3}
+      numColumns={5}
       automaticallyAdjustContentInsets
       contentInsetAdjustmentBehavior="automatic"
       contentInset={{ bottom: 0 }}
@@ -278,8 +268,7 @@ export default function EmojiList({ onSelect }: Props) {
             onSelect(item);
           }}
         >
-          {/* <Text style={{ fontSize: 60 }}>{item}</Text> */}
-          <Image source={item} style={styles.image} />
+          <Text style={{ fontSize: 60 }}>{item}</Text>
         </Pressable>
       )}
     />
