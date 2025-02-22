@@ -12,10 +12,10 @@ type Props = {
 };
 
 export default function EmojiSticker({ size, stickerSource }: Props) {
+  const { height, width } = useWindowDimensions();
   const scale = useSharedValue(size);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const { height, width } = useWindowDimensions();
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
