@@ -6,98 +6,34 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from "expo-media-library";
 import { captureRef } from "react-native-view-shot";
 import domtoimage from "dom-to-image";
-
-import Button from "@/components/Button";
-import ImageViewer from "@/components/ImageViewer";
-import IconButton from "@/components/IconButton";
-import CircleButton from "@/components/CircleButton";
-import EmojiPicker from "@/components/EmojiPicker";
-import EmojiList from "@/components/EmojiList";
-import EmojiSticker from "@/components/EmojiSticker";
+import {
+  Button,
+  CircleButton,
+  IconButton,
+  EmojiSticker,
+  ImageViewer,
+  EmojiList,
+  EmojiPicker,
+} from "@/components";
+import { useDisclosure, useImageEditor, usePermissions } from "@/hooks";
 
 const PlaceholderImage = require("../../assets/images/background-image.png");
 
 export default function Index() {
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(
-    undefined
-  );
-  const [showAppOptions, setShowAppOptions] = useState<boolean>(false);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [stickers, setStickers] = useState<string[]>([]);
-  const [status, requestPermission] = MediaLibrary.usePermissions();
-  const imageRef = useRef<View>(null);
-
-  if (status === null) {
-    requestPermission();
-  }
-
-  const pickImageAsync = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-      setShowAppOptions(true);
-    } else {
-      alert("You did not select any image.");
-    }
-  };
-
-  const onReset = () => {
-    setShowAppOptions(false);
-    setIsModalVisible(false);
-    setSelectedImage(undefined);
-    setStickers([]);
-  };
-
-  const onModalClose = () => {;
-    setIsModalVisible(false);
-  };
-
-  const onSaveImageAsync = async () => {
-    if (Platform.OS !== "web") {
-      try {
-        const localUri = await captureRef(imageRef, {
-          height: 440,
-          quality: 1,
-        });
-
-        await MediaLibrary.saveToLibraryAsync(localUri);
-        if (localUri) {
-          alert("Saved!");
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      try {
-        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
-          quality: 0.95,
-          width: 320,
-          height: 440,
-        });
-
-        let link = document.createElement("a");
-        link.download = "sticker-smash.jpeg";
-        link.href = dataUrl;
-        link.click();
-      } catch (e) {
-        console.log(e);
-      }
-    }
-  };
-
-  const onAddSticker = (sticker: string) => {
-    setStickers((prev) => [...prev, sticker]);
-    setIsModalVisible(false);
-  };
-
-  const openStickerModal = () => {
-    setIsModalVisible(true);
-  };
+  usePermissions();
+  const { isVisible, toggleModal } = useDisclosure();
+  const {
+    selectedImage,
+    showAppOptions,
+    setShowAppOptions,
+    pickedEmoji,
+    imageRef,
+    takePhoto,
+    pickImage,
+    resetApp,
+    saveImage,
+    addEmoji,
+  } = useImageEditor();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -108,48 +44,37 @@ export default function Index() {
               imgSource={PlaceholderImage}
               selectedImage={selectedImage}
             />
-            {stickers.map((sticker, index) => (
-              <EmojiSticker
-                key={index}
-                stickerSource={sticker}
-                size={40}
-              />
+            {pickedEmoji.map((sticker, index) => (
+              <EmojiSticker key={index} stickerSource={sticker} size={40} />
             ))}
           </View>
         </View>
         {showAppOptions ? (
-          <View >
+          <View style={styles.optionsContainer}>
             <View style={styles.optionsRow}>
-              <IconButton icon="refresh" label="Reset" onPress={onReset} />
-              <CircleButton onPress={openStickerModal} />
-              <IconButton
-                icon="save-alt"
-                label="Save"
-                onPress={onSaveImageAsync}
-              />
+              <IconButton icon="refresh" label="Reset" onPress={resetApp} />
+              <CircleButton onPress={toggleModal} isDisabled={isVisible} />
+              <IconButton icon="save-alt" label="Save" onPress={saveImage} />
             </View>
           </View>
         ) : (
-          <View>
-            <Button
-              theme="primary"
-              label="Choose a photo"
-              onPress={pickImageAsync}
-            />
+          <View style={styles.optionsContainer}>
+            <Button theme="primary" label="Choose Photo" onPress={pickImage} />
+            <Button theme="primary" label="Take Photo" onPress={takePhoto} />
             <Button
               label="Use this photo"
               onPress={() => setShowAppOptions(true)}
             />
           </View>
         )}
-        {isModalVisible && (
+        {isVisible && (
           <View>
             <EmojiPicker
-              key={isModalVisible ? "visible" : "hidden"}
-              isVisible={isModalVisible}
-              onClose={onModalClose}
+              key={isVisible ? "visible" : "hidden"}
+              isVisible={isVisible}
+              onClose={toggleModal}
             >
-              <EmojiList onSelect={onAddSticker} />
+              <EmojiList onSelect={addEmoji} onClose={toggleModal} />
             </EmojiPicker>
           </View>
         )}
@@ -163,7 +88,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#25292e",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
   imageContainer: {
     position: "relative",
@@ -171,7 +96,7 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     position: "absolute",
-    bottom: 10,
+    bottom: 30,
   },
   optionsRow: {
     alignItems: "center",
