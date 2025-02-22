@@ -2,11 +2,13 @@
 
 # dependencies
 node_modules/
+android/
 
 # Expo
 .expo/
 dist/
 web-build/
+expo-env.d.ts
 
 # Native
 *.orig.*
@@ -33,3 +35,5 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+app-example
